@@ -50,6 +50,20 @@ int main() {
     char* client_ip = inet_ntoa(client_address.sin_addr);
     printf("Connection accepted from %s (length: %d) for socket %d\n",
         client_ip, client_addrlen, read_socket);
+    
+    FILE* pipe = popen("uptime", "r");
+    if (!popen) {
+        fprintf(stderr, "Error %d executing `uptime`\n", errno);
+        return -1;
+    }
+    char command_output[BUFFER_SIZE_OUT];
+    fgets(command_output, BUFFER_SIZE_OUT, pipe);
+    printf("Result of `uptime`:  %s\n", command_output);
+    
+    if (pclose(pipe) != 0) {
+        fprintf(stderr, "Error %d closing filestream\n");
+        return -1;
+    }
 
     // Read
     char input[BUFFER_SIZE_IN];
