@@ -35,7 +35,7 @@ int main() {
         fprintf(stderr, "Error %d on read\n", errno);
         return -1;
     }
-    printf("Received %d bytes (\"%s\")\n", num_bytes_read, input);
+    printf("%s\n", input);
 
     return 0;
 }

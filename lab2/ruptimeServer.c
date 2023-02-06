@@ -55,14 +55,14 @@ int main() {
     // Parse the uptime
     char uptime[BUFFER_SIZE_OUT];
     parse_uptime(uptime);
-    // Write
+
+    // Write uptime to the client
     printf("%s\n", uptime);
     int num_bytes_sent = write(read_socket, uptime, BUFFER_SIZE_OUT);
     if (num_bytes_sent < 0) {
         fprintf(stderr, "Error %d on write", errno);
         return -1;
     }
-    printf("Sent \"%s\"\n");
 
     return 0;
 }
@@ -105,7 +105,6 @@ time_t parse_date(char* datestring) {
         printf("Error %d parsing date\n", errno);
         return -1;
     }
-    printf("Scan successful\n");
     // tm represents year as years since 1900
     time->tm_year -= 1900;
     // tm represents mon as 0-11
@@ -117,8 +116,6 @@ time_t parse_date(char* datestring) {
 
 char* format_time(char* buffer, double time) {
     int seconds = (int) time;
-    printf("Time (double): %d\n", time);
-    printf("Time (int):    %d\n", seconds);
     int hours = seconds / 3600;
     seconds %= 3600;
     int minutes = seconds / 60;
