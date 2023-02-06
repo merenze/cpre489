@@ -15,7 +15,7 @@
 #define BUFFER_SIZE_IN 128
 
 char* parse_uptime(char*);
-struct time_t* parse_date(char*);
+time_t parse_date(char*);
 
 
 int main() {
@@ -88,30 +88,26 @@ char* parse_uptime(char* buffer) {
     fgets(cmd_out, BUFFER_SIZE_OUT, pipe);
     pclose(pipe);
     // Parse the process output into a time_t structure
-    struct time_t* start_time = parse_date(cmd_out);
-    printf("bar\n");
-    char* now_pretty = asctime(parse_date);
-    printf("Time: %d-%d-%d");
+    time_t start_time = parse_date(cmd_out);
+    printf("%s\n", ctime(&start_time));
     // TODO
     return buffer;
 }
 
-struct time_t* parse_date(char* datestring) {
+time_t parse_date(char* datestring) {
     struct tm *time = malloc(sizeof(struct tm));
     char* format = "%d-%d-%d %d:%d:%d";
-    // TODO Fix segfault
-    printf("Segfault about to occur on sscanf\n");
     int scan = sscanf(datestring, format,
-        time->tm_year,
-        time->tm_mon, 
-        time->tm_mday, 
-        time->tm_hour, 
-        time->tm_min, 
-        time->tm_sec
+        &(time->tm_year),
+        &(time->tm_mon), 
+        &(time->tm_mday), 
+        &(time->tm_hour), 
+        &(time->tm_min), 
+        &(time->tm_sec)
     );
     if (scan == EOF) {
         printf("Error %d parsing date\n", errno);
-        return NULL;
+        return -1;
     }
     printf("Scan successful\n");
     // tm represents year as years since 1900
@@ -119,8 +115,6 @@ struct time_t* parse_date(char* datestring) {
     // tm represents mon as 0-11
     time->tm_mon -= 1;
     // Convert the structure to the final format
-    printf("Converting tm to time_t... ");
-    struct time_t* result = mktime(time);
-    printf("Done\n");
+    time_t result = mktime(time);
     return result;
 }
