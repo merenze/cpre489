@@ -6,7 +6,7 @@
 
 #define CONNECT_PORT 1024
 #define CONNECT_ADDR "127.0.0.1"
-#define BUFFER_SIZE_OUT 128
+#define BUFFER_SIZE_OUT 1
 #define BUFFER_SIZE_IN 128
 
 int main() {
@@ -28,14 +28,12 @@ int main() {
         return -1;
     }
 
+    const char send = 0;
     // Write
-    const char output[BUFFER_SIZE_OUT] = "Hello, Server!";
-    printf("Output size: %d\n", sizeof(output));
-    if (write(socketfd, output, sizeof(output)) < 0) {
+    if (write(socketfd, &send, BUFFER_SIZE_OUT) < 0) {
         printf("Error %d on write\n", errno);
         return -1;
     }
-    printf("Sent \"%s\"\n", output);
 
     // Read
     const char input[BUFFER_SIZE_IN];

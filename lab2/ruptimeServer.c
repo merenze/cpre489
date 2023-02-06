@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -11,6 +13,9 @@
 #define LISTEN_ADDR "127.0.0.1"
 #define BUFFER_SIZE_OUT 128
 #define BUFFER_SIZE_IN 128
+
+char* parse_uptime(char*);
+struct time_t* parse_date(char*);
 
 
 int main() {
@@ -37,31 +42,12 @@ int main() {
         fprintf(stderr, "Error %d on listening socket %d\n", errno, socketfd);
         return -1;
     }
-    char* server_ip = inet_ntoa(server_address.sin_addr);
-    printf("Server listening on %s\n", server_ip); 
 
     // Accept a connection
     int client_addrlen = sizeof(client_address);
     int read_socket = accept(socketfd, &client_address, &client_addrlen);
     if (read_socket < 0) {
         fprintf(stderr, "Error %d accepting the client\n", errno);
-        return -1;
-    }
-    char* client_ip = inet_ntoa(client_address.sin_addr);
-    printf("Connection accepted from %s (length: %d) for socket %d\n",
-        client_ip, client_addrlen, read_socket);
-    
-    FILE* pipe = popen("uptime", "r");
-    if (!popen) {
-        fprintf(stderr, "Error %d executing `uptime`\n", errno);
-        return -1;
-    }
-    char command_output[BUFFER_SIZE_OUT];
-    fgets(command_output, BUFFER_SIZE_OUT, pipe);
-    printf("Result of `uptime`:  %s\n", command_output);
-    
-    if (pclose(pipe) != 0) {
-        fprintf(stderr, "Error %d closing filestream\n");
         return -1;
     }
 
@@ -73,6 +59,8 @@ int main() {
         return -1;
     }
     printf("Received %d bytes (\"%s\")\n", num_bytes_read, input);
+    
+    fprintf("%s\n", parse_uptime(NULL));
 
     // Write
     char output[BUFFER_SIZE_OUT] = "Hello, client!";
@@ -84,4 +72,55 @@ int main() {
     printf("Sent \"%s\"\n");
 
     return 0;
+}
+
+char* parse_uptime(char* buffer) {
+    // Uptime does not show seconds, so we're doing some math here.
+    // First, get the machine's start time.
+    // Execute uptime process
+    FILE* pipe = popen("uptime -s", "r");
+    if (!popen) {
+        fprintf(stderr, "Error %d executing `uptime`\n", errno);
+        return NULL;
+    }
+    // Capture the process output
+    char cmd_out[BUFFER_SIZE_OUT];
+    fgets(cmd_out, BUFFER_SIZE_OUT, pipe);
+    pclose(pipe);
+    // Parse the process output into a time_t structure
+    struct time_t* start_time = parse_date(cmd_out);
+    printf("bar\n");
+    char* now_pretty = asctime(parse_date);
+    printf("Time: %d-%d-%d");
+    // TODO
+    return buffer;
+}
+
+struct time_t* parse_date(char* datestring) {
+    struct tm *time = malloc(sizeof(struct tm));
+    char* format = "%d-%d-%d %d:%d:%d";
+    // TODO Fix segfault
+    printf("Segfault about to occur on sscanf\n");
+    int scan = sscanf(datestring, format,
+        time->tm_year,
+        time->tm_mon, 
+        time->tm_mday, 
+        time->tm_hour, 
+        time->tm_min, 
+        time->tm_sec
+    );
+    if (scan == EOF) {
+        printf("Error %d parsing date\n", errno);
+        return NULL;
+    }
+    printf("Scan successful\n");
+    // tm represents year as years since 1900
+    time->tm_year -= 1900;
+    // tm represents mon as 0-11
+    time->tm_mon -= 1;
+    // Convert the structure to the final format
+    printf("Converting tm to time_t... ");
+    struct time_t* result = mktime(time);
+    printf("Done\n");
+    return result;
 }
