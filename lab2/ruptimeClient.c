@@ -28,13 +28,6 @@ int main() {
         return -1;
     }
 
-    const char send = 0;
-    // Write
-    if (write(socketfd, &send, BUFFER_SIZE_OUT) < 0) {
-        printf("Error %d on write\n", errno);
-        return -1;
-    }
-
     // Read
     const char input[BUFFER_SIZE_IN];
     int num_bytes_read = read(socketfd, input, sizeof(input));

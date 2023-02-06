@@ -16,6 +16,7 @@
 
 char* parse_uptime(char*);
 time_t parse_date(char*);
+char* format_time(char*, double);
 
 
 int main() {
@@ -51,20 +52,12 @@ int main() {
         return -1;
     }
 
-    // Read
-    char input[BUFFER_SIZE_IN];
-    int num_bytes_read = read(read_socket, input, sizeof(input));
-    if (num_bytes_read < 0) {
-        fprintf(stderr, "Error %d on read\n", errno);
-        return -1;
-    }
-    printf("Received %d bytes (\"%s\")\n", num_bytes_read, input);
-    
-    fprintf("%s\n", parse_uptime(NULL));
-
+    // Parse the uptime
+    char uptime[BUFFER_SIZE_OUT];
+    parse_uptime(uptime);
     // Write
-    char output[BUFFER_SIZE_OUT] = "Hello, client!";
-    int num_bytes_sent = write(read_socket, output, sizeof(output));
+    printf("%s\n", uptime);
+    int num_bytes_sent = write(read_socket, uptime, BUFFER_SIZE_OUT);
     if (num_bytes_sent < 0) {
         fprintf(stderr, "Error %d on write", errno);
         return -1;
@@ -88,8 +81,11 @@ char* parse_uptime(char* buffer) {
     fgets(cmd_out, BUFFER_SIZE_OUT, pipe);
     pclose(pipe);
     // Parse the process output into a time_t structure
-    time_t start_time = parse_date(cmd_out);
-    printf("%s\n", ctime(&start_time));
+    time_t time_start = parse_date(cmd_out);
+    time_t time_now;
+    time(&time_now);
+    double time_diff = difftime(time_now, time_start);
+    format_time(buffer, time_diff);
     // TODO
     return buffer;
 }
@@ -117,4 +113,17 @@ time_t parse_date(char* datestring) {
     // Convert the structure to the final format
     time_t result = mktime(time);
     return result;
+}
+
+char* format_time(char* buffer, double time) {
+    int seconds = (int) time;
+    printf("Time (double): %d\n", time);
+    printf("Time (int):    %d\n", seconds);
+    int hours = seconds / 3600;
+    seconds %= 3600;
+    int minutes = seconds / 60;
+    seconds %= 60;
+
+    sprintf(buffer, "Uptime: %d hour(s) %d minute(s) %d second(s)", hours, minutes, seconds);
+    return buffer;
 }
